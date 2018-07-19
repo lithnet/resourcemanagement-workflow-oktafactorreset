@@ -211,7 +211,21 @@ namespace Lithnet.ResourceManagement.Workflows
                 Uri uri = new Uri(new Uri(this.TenantUrl), string.Format("/api/v1/users/{0}/factors/{1}", userID, factorID));
 
                 Trace.WriteLine(string.Format("Deleting factor {0} {1}", factorDescription, uri));
-                byte[] result = client.UploadValues(uri, "DELETE", new NameValueCollection());
+
+                byte[] result = null;
+
+                try
+                {
+                   result = client.UploadValues(uri, "DELETE", new NameValueCollection());
+                }
+                catch (WebException ex)
+                {
+                    HttpWebResponse errorResponse = ex.Response as HttpWebResponse;
+                    if (errorResponse == null || errorResponse.StatusCode != HttpStatusCode.NotFound)
+                    {
+                        throw;
+                    }
+                }
 
                 if (result == null || result.Length == 0)
                 {
@@ -233,6 +247,7 @@ namespace Lithnet.ResourceManagement.Workflows
 
         private void AddMessage(DetailLevel level, string message)
         {
+            Trace.WriteLine(string.Format("{0}: {1}", level, message));
             this.StatusItems.Add(new RequestStatusDetail(level, message));
         }
 
